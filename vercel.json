@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx expo install react-dom react-native-web && npx expo export --platform web",
+  "buildCommand": "npm install react-dom@18.3.1 react-native-web@0.19.13 --legacy-peer-deps --save-exact && npx expo export --platform web",
   "outputDirectory": "dist",
   "installCommand": "npm install --legacy-peer-deps",
   "framework": null,
