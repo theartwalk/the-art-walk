@@ -1,6 +1,9 @@
 {
-  "buildCommand": "npx expo export --platform web",
+  "buildCommand": "npx expo install react-dom react-native-web && npx expo export --platform web",
   "outputDirectory": "dist",
   "installCommand": "npm install --legacy-peer-deps",
-  "framework": null
+  "framework": null,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
