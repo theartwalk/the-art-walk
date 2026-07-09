@@ -41,7 +41,7 @@ export default function AlertsScreen({ navigation }) {
         ItemSeparatorComponent={() => <View style={styles.sep} />}
         ListFooterComponent={
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Notifications are posted by Matin for the Artsy Places NCR community.</Text>
+            <Text style={styles.footerText}>Notifications are posted by Matin for The Art Walk community.</Text>
           </View>
         }
       />

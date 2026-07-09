@@ -137,7 +137,7 @@ export default function EventDetailScreen({ route, navigation }) {
             onPress={() => Linking.openURL(WHATSAPP_GROUP)}
           >
             <Text style={styles.whatsappText}>
-              Join the Artsy Places NCR WhatsApp group →
+              Join The Art Walk WhatsApp group →
             </Text>
           </TouchableOpacity>
         </View>

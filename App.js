@@ -3,7 +3,22 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { TouchableOpacity, Text } from 'react-native';
+import { Platform } from 'react-native';
+
+// On web, allow navigating directly to /admin
+const linking = {
+  prefixes: [],
+  config: {
+    screens: {
+      Home: '',
+      Admin: 'admin',
+      Map: 'map',
+      Saved: 'saved',
+      Alerts: 'alerts',
+      EventDetail: 'event/:id',
+    },
+  },
+};
 
 import HomeScreen from './src/screens/HomeScreen';
 import EventDetailScreen from './src/screens/EventDetailScreen';
@@ -17,7 +32,7 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <NavigationContainer>
+      <NavigationContainer linking={linking}>
         <Stack.Navigator
           screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
         >

@@ -1,235 +1,457 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  Dimensions, ScrollView, StatusBar, Share, Linking,
+  Dimensions, StatusBar, Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, spacing } from '../theme';
-import { events } from '../data/mockData';
 
-const { width: SCREEN_W } = Dimensions.get('window');
-const CARD_W = Math.floor(SCREEN_W * 0.38);
-const CARD_H = Math.floor(CARD_W * 1.85);
+const LOGO_DARK = require('../../assets/logo-dark.png');
+const LOGO_LIGHT = require('../../assets/logo-light.png');
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors } from '../theme';
+import { events as mockEvents } from '../data/mockData';
+import { fetchEvents } from '../lib/supabase';
 
-const BADGE_STYLES = {
-  tonight: { bg: '#C84030', text: '#fff' },
-  openCall: { bg: '#1A6B3C', text: '#fff' },
-  free: { bg: '#1A4A7A', text: '#fff' },
-  soon: { bg: 'rgba(0,0,0,0.55)', text: '#fff' },
-};
+const { width: W, height: H } = Dimensions.get('window');
 
-function Badge({ label, type }) {
-  const s = BADGE_STYLES[type] || BADGE_STYLES.soon;
+// ── Abstract art compositions ──────────────────────────────────────────────
+// Each composition is a different arrangement of shapes — like abstract art
+function ArtComposition({ color, index, title }) {
+  const comp = index % 6;
+  const dark = darken(color, 0.3);
+  const light = lighten(color, 0.25);
+
+  if (comp === 0) return (
+    <View style={StyleSheet.absoluteFill}>
+      <View style={[sh.bigCircle, { backgroundColor: light, top: -W * 0.3, left: -W * 0.3 }]} />
+      <View style={[sh.smallCircle, { backgroundColor: dark, bottom: H * 0.3, right: -W * 0.1 }]} />
+      <View style={[sh.thinRect, { backgroundColor: dark, top: H * 0.25, left: W * 0.1, transform: [{ rotate: '15deg' }] }]} />
+      <View style={[sh.dot, { backgroundColor: light, top: H * 0.45, right: W * 0.2 }]} />
+    </View>
+  );
+  if (comp === 1) return (
+    <View style={StyleSheet.absoluteFill}>
+      <View style={[sh.bigRect, { backgroundColor: light, top: H * 0.05, left: W * 0.55, transform: [{ rotate: '-8deg' }] }]} />
+      <View style={[sh.bigCircle, { backgroundColor: dark, top: H * 0.1, left: -W * 0.15, opacity: 0.6 }]} />
+      <View style={[sh.medCircle, { backgroundColor: light, bottom: H * 0.25, right: W * 0.1 }]} />
+      <View style={[sh.thinRect, { backgroundColor: dark, top: H * 0.5, left: W * 0.15, transform: [{ rotate: '45deg' }] }]} />
+    </View>
+  );
+  if (comp === 2) return (
+    <View style={StyleSheet.absoluteFill}>
+      <View style={[sh.halfCircle, { backgroundColor: light, top: -H * 0.05, right: -W * 0.1 }]} />
+      <View style={[sh.smallCircle, { backgroundColor: dark, top: H * 0.2, left: W * 0.1 }]} />
+      <View style={[sh.bigRect, { backgroundColor: dark, bottom: H * 0.2, left: -W * 0.15, transform: [{ rotate: '20deg' }] }]} />
+      <View style={[sh.dot, { backgroundColor: light, top: H * 0.35, right: W * 0.3 }]} />
+      <View style={[sh.dot, { backgroundColor: light, top: H * 0.42, right: W * 0.15 }]} />
+    </View>
+  );
+  if (comp === 3) return (
+    <View style={StyleSheet.absoluteFill}>
+      <View style={[sh.bigCircle, { backgroundColor: dark, bottom: H * 0.1, right: -W * 0.25 }]} />
+      <View style={[sh.thinRect, { backgroundColor: light, top: H * 0.15, left: W * 0.05, width: W * 0.9, transform: [{ rotate: '-3deg' }] }]} />
+      <View style={[sh.medCircle, { backgroundColor: light, top: H * 0.22, left: W * 0.55 }]} />
+      <View style={[sh.smallCircle, { backgroundColor: dark, top: H * 0.3, left: W * 0.05, opacity: 0.5 }]} />
+    </View>
+  );
+  if (comp === 4) return (
+    <View style={StyleSheet.absoluteFill}>
+      <View style={[sh.bigRect, { backgroundColor: light, top: H * 0.08, left: W * 0.08, transform: [{ rotate: '5deg' }] }]} />
+      <View style={[sh.bigCircle, { backgroundColor: dark, top: H * 0.02, right: -W * 0.3, opacity: 0.7 }]} />
+      <View style={[sh.dot, { backgroundColor: dark, bottom: H * 0.35, left: W * 0.15 }]} />
+      <View style={[sh.dot, { backgroundColor: dark, bottom: H * 0.35, left: W * 0.3 }]} />
+      <View style={[sh.dot, { backgroundColor: dark, bottom: H * 0.35, left: W * 0.45 }]} />
+    </View>
+  );
+  // comp === 5
   return (
-    <View style={[styles.badge, { backgroundColor: s.bg }]}>
-      <Text style={[styles.badgeText, { color: s.text }]}>{label}</Text>
+    <View style={StyleSheet.absoluteFill}>
+      <View style={[sh.halfCircle, { backgroundColor: dark, bottom: H * 0.15, left: -W * 0.1, transform: [{ rotate: '180deg' }] }]} />
+      <View style={[sh.medCircle, { backgroundColor: light, top: H * 0.08, right: W * 0.05 }]} />
+      <View style={[sh.thinRect, { backgroundColor: dark, top: H * 0.3, left: W * 0.0, width: W * 0.5, transform: [{ rotate: '90deg' }] }]} />
+      <View style={[sh.dot, { backgroundColor: light, top: H * 0.18, left: W * 0.2 }]} />
     </View>
   );
 }
 
-function EventCard({ item, onPress, active }) {
+function darken(hex, amount) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.max(0, (num >> 16) - Math.round(255 * amount));
+  const g = Math.max(0, ((num >> 8) & 0xff) - Math.round(255 * amount));
+  const b = Math.max(0, (num & 0xff) - Math.round(255 * amount));
+  return `rgb(${r},${g},${b})`;
+}
+function lighten(hex, amount) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, (num >> 16) + Math.round(255 * amount));
+  const g = Math.min(255, ((num >> 8) & 0xff) + Math.round(255 * amount));
+  const b = Math.min(255, (num & 0xff) + Math.round(255 * amount));
+  return `rgb(${r},${g},${b})`;
+}
+
+// ── Tag chip ───────────────────────────────────────────────────────────────
+function Tag({ label }) {
+  return (
+    <View style={s.tag}>
+      <Text style={s.tagText}>{label}</Text>
+    </View>
+  );
+}
+
+// ── Single full-screen event card ──────────────────────────────────────────
+function EventCard({ item, index, onPress, savedState, onSave }) {
+  const insets = useSafeAreaInsets();
+
   return (
     <TouchableOpacity
+      activeOpacity={0.97}
       onPress={onPress}
-      activeOpacity={0.88}
-      style={styles.cardCol}
+      style={[s.card, { height: H }]}
     >
-      <View style={[
-        styles.cardImg,
-        { backgroundColor: item.color },
-        active && styles.cardImgActive,
-      ]}>
-        <Badge label={item.badge} type={item.badgeType} />
-        {/* Decorative shape */}
-        <View style={styles.shapeOuter} />
-        <View style={styles.shapeInner} />
-      </View>
-      <View style={styles.cardCaption}>
-        <Text style={styles.captionTitle} numberOfLines={2}>{item.title}</Text>
-        <Text style={styles.captionVenue} numberOfLines={1}>{item.venue}</Text>
-        <Text style={styles.captionDate}>{item.dateLabel}</Text>
+      {/* Background — real image if available, else abstract art */}
+      {item.mediaUrl && item.mediaType === 'image' ? (
+        <Image source={{ uri: item.mediaUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      ) : (
+        <>
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: item.color }]} />
+          <ArtComposition color={item.color} index={index} title={item.title} />
+        </>
+      )}
+
+      {/* Gradient overlay — transparent top → black bottom */}
+      <LinearGradient
+        colors={['transparent', 'transparent', 'rgba(0,0,0,0.55)', 'rgba(0,0,0,0.92)']}
+        locations={[0, 0.35, 0.65, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Content at bottom */}
+      <View style={[s.cardContent, { paddingBottom: insets.bottom + 100 }]}>
+
+        {/* Badge */}
+        {item.badge && (
+          <View style={[s.badge, { backgroundColor: getBadgeColor(item.badgeType) }]}>
+            <Text style={s.badgeText}>{item.badge}</Text>
+          </View>
+        )}
+
+        {/* Title */}
+        <Text style={s.cardTitle} numberOfLines={3}>{item.title.toUpperCase()}</Text>
+
+        {/* Artist / Type */}
+        <Text style={s.cardArtist}>{item.type}</Text>
+
+        {/* Tags */}
+        <View style={s.tagRow}>
+          {(item.tags || [item.type, item.price === 'Free' ? 'Free Entry' : null].filter(Boolean)).map((t, i) => (
+            <Tag key={i} label={t} />
+          ))}
+        </View>
+
+        {/* Gallery info */}
+        <View style={s.galleryRow}>
+          <View style={[s.galDot, { backgroundColor: item.color }]} />
+          <Text style={s.galleryName}>{item.venue}</Text>
+          <Text style={s.galleryArea}>· {item.area || 'Delhi NCR'}</Text>
+        </View>
+
+        {/* Date + time */}
+        <Text style={s.dateText}>{item.dateLabel} · {item.time}</Text>
+
+        {/* Action buttons */}
+        <View style={s.actionRow}>
+          <TouchableOpacity
+            style={[s.actionBtn, savedState && s.actionBtnActive]}
+            onPress={onSave}
+          >
+            <Text style={[s.actionBtnText, savedState && s.actionBtnTextActive]}>
+              {savedState ? '♥ Saved' : '♡ Save'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.actionBtnOutline} onPress={onPress}>
+            <Text style={s.actionBtnOutlineText}>View Details →</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );
 }
 
+function getBadgeColor(type) {
+  if (type === 'tonight') return '#C84030';
+  if (type === 'openCall') return '#1A6B3C';
+  if (type === 'free') return '#1A4A7A';
+  return 'rgba(0,0,0,0.6)';
+}
+
+// ── Main screen ────────────────────────────────────────────────────────────
 export default function HomeScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [activeIdx, setActiveIdx] = useState(0);
-  const flatRef = useRef(null);
+  const [savedMap, setSavedMap] = useState({});
+  const [events, setEvents] = useState(mockEvents);
+
+  useEffect(() => {
+    fetchEvents().then(data => {
+      if (data && data.length > 0) setEvents(data);
+    });
+  }, []);
 
   const onViewRef = useRef(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      setActiveIdx(viewableItems[0].index ?? 0);
-    }
+    if (viewableItems.length > 0) setActiveIdx(viewableItems[0].index ?? 0);
   });
-  const viewConfigRef = useRef({ viewAreaCoveragePercentThreshold: 50 });
+  const viewConfigRef = useRef({ itemVisiblePercentThreshold: 60 });
+
+  const handleSave = useCallback(async (id) => {
+    const next = !savedMap[id];
+    setSavedMap(prev => ({ ...prev, [id]: next }));
+    try {
+      if (next) {
+        const event = events.find(e => e.id === id);
+        await AsyncStorage.setItem(`saved_${id}`, JSON.stringify(event));
+      } else {
+        await AsyncStorage.removeItem(`saved_${id}`);
+      }
+    } catch (_) {}
+  }, [savedMap, events]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+    <View style={s.screen}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* Top Nav */}
-      <View style={styles.topNav}>
-        <TouchableOpacity onPress={() => navigation.navigate('Map')}>
-          <Text style={styles.navSide}>Map</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onLongPress={() => navigation.navigate('Admin')} delayLongPress={1500}>
-          <Text style={styles.navCenter}>ARTSY NCR</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Saved')}>
-          <Text style={styles.navSide}>Saved</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.navBorder} />
-
-      {/* World2-style horizontal card strip */}
+      {/* Vertical full-screen feed */}
       <FlatList
-        ref={flatRef}
         data={events}
         keyExtractor={i => i.id}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={CARD_W + 2}
+        pagingEnabled
+        snapToInterval={H}
+        snapToAlignment="start"
         decelerationRate="fast"
+        disableIntervalMomentum
+        showsVerticalScrollIndicator={false}
         onViewableItemsChanged={onViewRef.current}
         viewabilityConfig={viewConfigRef.current}
-        contentContainerStyle={styles.stripContent}
+        getItemLayout={(_, index) => ({ length: H, offset: H * index, index })}
         renderItem={({ item, index }) => (
           <EventCard
             item={item}
-            active={index === activeIdx}
+            index={index}
+            savedState={!!savedMap[item.id]}
+            onSave={() => handleSave(item.id)}
             onPress={() => navigation.navigate('EventDetail', { event: item })}
           />
         )}
       />
 
-      {/* Dot indicators */}
-      <View style={styles.dotRow}>
-        {events.map((_, i) => (
-          <TouchableOpacity
-            key={i}
-            onPress={() => {
-              flatRef.current?.scrollToIndex({ index: i, animated: true });
-              setActiveIdx(i);
-            }}
-          >
-            <View style={[styles.dot, i === activeIdx && styles.dotActive]} />
+      {/* Top bar — floats over the feed */}
+      <View style={[s.topBar, { paddingTop: insets.top + 8 }]}>
+        {/* Logo — long press opens admin */}
+        <TouchableOpacity
+          onLongPress={() => navigation.navigate('Admin')}
+          delayLongPress={1500}
+          activeOpacity={0.9}
+        >
+          <Image source={LOGO_DARK} style={s.topLogo} resizeMode="contain" />
+        </TouchableOpacity>
+
+        <View style={s.topRight}>
+          <TouchableOpacity style={s.topPill} onPress={() => navigation.navigate('Alerts')}>
+            <Text style={s.topPillText}>⚙</Text>
           </TouchableOpacity>
+          <View style={s.topCityPill}>
+            <Text style={s.topCityText}>Delhi NCR ▾</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Dot indicators — right side */}
+      <View style={[s.dotsCol, { top: H * 0.35 }]}>
+        {events.map((_, i) => (
+          <View key={i} style={[s.dotV, i === activeIdx && s.dotVActive]} />
         ))}
       </View>
 
-      <View style={styles.navBorder} />
-
-      {/* Bottom action bar */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity
-          style={styles.bottomAction}
-          onPress={() => navigation.navigate('Map')}
-        >
-          <Text style={styles.bottomActionText}>Gallery Map</Text>
+      {/* Bottom nav bar */}
+      <View style={[s.bottomNav, { paddingBottom: insets.bottom + 4 }]}>
+        <TouchableOpacity style={s.navItem} onPress={() => navigation.navigate('Map')}>
+          <Text style={s.navIcon}>🗺</Text>
+          <Text style={s.navLabel}>Map</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.bottomCTA}
-          onPress={() => Linking.openURL('https://artsy-map.vercel.app')}
-        >
-          <Text style={styles.bottomCTAText}>ALL EVENTS</Text>
+        <TouchableOpacity style={s.navItem}>
+          <Text style={[s.navIcon, s.navIconActive]}>◉</Text>
+          <Text style={[s.navLabel, s.navLabelActive]}>Feed</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.bottomAction}
-          onPress={() => navigation.navigate('Alerts')}
-        >
-          <Text style={styles.bottomActionText}>Alerts</Text>
+        <TouchableOpacity style={s.navItem} onPress={() => navigation.navigate('Saved')}>
+          <Text style={s.navIcon}>♡</Text>
+          <Text style={s.navLabel}>Saved</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.navItem} onPress={() => navigation.navigate('Alerts')}>
+          <Text style={s.navIcon}>🔔</Text>
+          <Text style={s.navLabel}>Alerts</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.navItem}>
+          <Text style={s.navIcon}>⊙</Text>
+          <Text style={s.navLabel}>Explore</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+// ── Styles ─────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: '#000' },
 
-  topNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  navSide: { fontSize: 13, color: colors.textLight, letterSpacing: 0.3 },
-  navCenter: {
-    fontSize: 14, fontWeight: '700', color: colors.black,
-    letterSpacing: 3,
-  },
-  navBorder: { height: 0.5, backgroundColor: colors.border, marginHorizontal: 0 },
+  card: { width: W, height: H, overflow: 'hidden' },
 
-  stripContent: { paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
-
-  cardCol: { width: CARD_W, marginRight: 2 },
-  cardImg: {
-    width: CARD_W, height: CARD_H,
-    borderRadius: 3,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardImgActive: {
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18, shadowRadius: 8, elevation: 6,
+  cardContent: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    paddingHorizontal: 24,
   },
 
   badge: {
-    position: 'absolute', top: 8, left: 0,
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderTopRightRadius: 3, borderBottomRightRadius: 3,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 4, marginBottom: 12,
   },
-  badgeText: { fontSize: 8, fontWeight: '700', letterSpacing: 0.8 },
+  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 1 },
 
-  shapeOuter: {
-    width: CARD_W * 0.7, height: CARD_W * 0.7,
-    borderRadius: CARD_W * 0.35,
-    borderWidth: 1.5, borderColor: 'rgba(0,0,0,0.1)',
+  cardTitle: {
+    fontSize: 32, fontWeight: '800', color: '#fff',
+    letterSpacing: 0.5, lineHeight: 36, marginBottom: 8,
+    fontStyle: 'italic',
+  },
+  cardArtist: {
+    fontSize: 14, color: 'rgba(255,255,255,0.75)',
+    marginBottom: 12, letterSpacing: 0.3,
+  },
+
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
+  tag: {
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.45)',
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4,
+  },
+  tagText: { color: 'rgba(255,255,255,0.9)', fontSize: 11, letterSpacing: 0.3 },
+
+  galleryRow: {
+    flexDirection: 'row', alignItems: 'center', marginBottom: 6,
+  },
+  galDot: { width: 8, height: 8, borderRadius: 4, marginRight: 7 },
+  galleryName: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  galleryArea: { color: 'rgba(255,255,255,0.6)', fontSize: 13, marginLeft: 4 },
+
+  dateText: {
+    color: 'rgba(255,255,255,0.6)', fontSize: 12,
+    marginBottom: 18, letterSpacing: 0.2,
+  },
+
+  actionRow: { flexDirection: 'row', gap: 10, marginBottom: 6 },
+  actionBtn: {
+    flex: 1, paddingVertical: 13,
+    backgroundColor: '#fff',
+    borderRadius: 6, alignItems: 'center',
+  },
+  actionBtnActive: { backgroundColor: '#C8A96A' },
+  actionBtnText: { color: '#111', fontSize: 13, fontWeight: '700', letterSpacing: 0.5 },
+  actionBtnTextActive: { color: '#fff' },
+  actionBtnOutline: {
+    flex: 1, paddingVertical: 13,
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.5)',
+    borderRadius: 6, alignItems: 'center',
+  },
+  actionBtnOutlineText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+
+  // Top bar
+  topBar: {
+    position: 'absolute', top: 0, left: 0, right: 0,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 16, paddingBottom: 8,
+  },
+  topLogo: {
+    width: 48, height: 48, borderRadius: 24,
+  },
+  topRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  topPill: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  topPillText: { color: '#fff', fontSize: 16 },
+  topCityPill: {
+    paddingHorizontal: 14, paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+  },
+  topCityText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+
+  // Side dots
+  dotsCol: {
+    position: 'absolute', right: 10,
+    flexDirection: 'column', gap: 5,
+  },
+  dotV: {
+    width: 4, height: 4, borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  dotVActive: {
+    height: 18, borderRadius: 2,
+    backgroundColor: '#fff',
+  },
+
+  // Bottom nav
+  bottomNav: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(10,10,10,0.88)',
+    borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.1)',
+    paddingTop: 10,
+  },
+  navItem: {
+    flex: 1, alignItems: 'center', gap: 3,
+  },
+  navIcon: { fontSize: 18, color: 'rgba(255,255,255,0.45)' },
+  navIconActive: { color: '#C8A96A' },
+  navLabel: { fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 0.3 },
+  navLabelActive: { color: '#C8A96A', fontWeight: '700' },
+});
+
+// Abstract shape styles
+const sh = StyleSheet.create({
+  bigCircle: {
     position: 'absolute',
+    width: W * 0.75, height: W * 0.75,
+    borderRadius: W * 0.375, opacity: 0.35,
   },
-  shapeInner: {
-    width: CARD_W * 0.4, height: CARD_W * 0.4,
-    borderRadius: CARD_W * 0.2,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+  medCircle: {
     position: 'absolute',
+    width: W * 0.42, height: W * 0.42,
+    borderRadius: W * 0.21, opacity: 0.4,
   },
-
-  cardCaption: {
-    paddingTop: 8, paddingBottom: 4,
-    paddingHorizontal: 2,
-    minHeight: 64,
+  smallCircle: {
+    position: 'absolute',
+    width: W * 0.22, height: W * 0.22,
+    borderRadius: W * 0.11, opacity: 0.4,
   },
-  captionTitle: { fontSize: 12, fontWeight: '600', color: colors.text, lineHeight: 16, marginBottom: 3 },
-  captionVenue: { fontSize: 10, color: colors.textMid, marginBottom: 2 },
-  captionDate: { fontSize: 10, color: colors.gold, fontWeight: '500' },
-
-  dotRow: {
-    flexDirection: 'row', justifyContent: 'center',
-    gap: 4, paddingVertical: spacing.sm,
-    backgroundColor: colors.bg,
+  halfCircle: {
+    position: 'absolute',
+    width: W * 0.65, height: W * 0.65,
+    borderRadius: W * 0.325, opacity: 0.3,
   },
-  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#DEDEDE' },
-  dotActive: { width: 14, borderRadius: 2, backgroundColor: colors.black },
-
-  bottomBar: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.bg,
+  bigRect: {
+    position: 'absolute',
+    width: W * 0.35, height: H * 0.22,
+    borderRadius: 6, opacity: 0.3,
   },
-  bottomAction: { paddingVertical: 4 },
-  bottomActionText: { fontSize: 12, color: colors.textLight, letterSpacing: 0.3 },
-  bottomCTA: {
-    borderWidth: 1, borderColor: colors.black,
-    paddingHorizontal: spacing.lg, paddingVertical: 8,
-    borderRadius: 2,
+  thinRect: {
+    position: 'absolute',
+    width: W * 0.3, height: 3,
+    opacity: 0.45,
   },
-  bottomCTAText: { fontSize: 11, fontWeight: '700', color: colors.black, letterSpacing: 2 },
+  dot: {
+    position: 'absolute',
+    width: 14, height: 14,
+    borderRadius: 7, opacity: 0.55,
+  },
 });
