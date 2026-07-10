@@ -249,7 +249,7 @@ export default function HomeScreen({ navigation }) {
       />
 
       {/* Top bar — floats over the feed */}
-      <View style={[s.topBar, { paddingTop: insets.top + 8 }]}>
+      <View style={[s.topBar, { paddingTop: insets.top + 14 }]}>
         {/* Logo — long press opens admin */}
         <TouchableOpacity
           onLongPress={() => navigation.navigate('Admin')}
@@ -373,7 +373,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 16, paddingBottom: 8,
   },
   topLogo: {
-    width: 48, height: 48, borderRadius: 24,
+    width: 60, height: 60, borderRadius: 30,
   },
   topRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   topPill: {
