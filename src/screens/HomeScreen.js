@@ -294,9 +294,9 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Floating search — right side, below save button */}
+      {/* Floating search — right side, aligned with nav pill */}
       <TouchableOpacity
-        style={[s.searchFloat, { bottom: insets.bottom + 84 }]}
+        style={[s.searchFloat, { bottom: insets.bottom + 12 }]}
         activeOpacity={0.85}
       >
         <Ionicons name="search" size={20} color="rgba(255,255,255,0.85)" />
