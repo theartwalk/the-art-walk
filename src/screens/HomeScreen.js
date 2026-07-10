@@ -285,8 +285,8 @@ export default function HomeScreen({ navigation }) {
                 >
                   <Ionicons
                     name={tab.icon}
-                    size={22}
-                    color={active ? '#C84030' : 'rgba(255,255,255,0.65)'}
+                    size={20}
+                    color={active ? '#C84030' : 'rgba(255,255,255,0.7)'}
                   />
                 </TouchableOpacity>
               );
@@ -295,7 +295,7 @@ export default function HomeScreen({ navigation }) {
 
           {/* Search pill — separate */}
           <TouchableOpacity style={s.searchPill} activeOpacity={0.75}>
-            <Ionicons name="search" size={22} color="rgba(255,255,255,0.65)" />
+            <Ionicons name="search" size={20} color="rgba(255,255,255,0.7)" />
           </TouchableOpacity>
         </View>
       </View>
@@ -400,24 +400,24 @@ const s = StyleSheet.create({
   },
   navRow: {
     alignSelf: 'center',
-    flexDirection: 'row', alignItems: 'center', gap: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
   },
   navPill: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(40,40,40,0.85)',
-    borderRadius: 50, padding: 7, gap: 2,
+    backgroundColor: 'rgba(80,80,80,0.55)',
+    borderRadius: 40, padding: 5, gap: 2,
   },
   navBtn: {
-    width: 62, height: 54, borderRadius: 14,
+    width: 48, height: 44, borderRadius: 12,
     justifyContent: 'center', alignItems: 'center',
   },
   navBtnActive: {
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 12,
   },
   searchPill: {
-    width: 68, height: 68, borderRadius: 34,
-    backgroundColor: 'rgba(40,40,40,0.85)',
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: 'rgba(80,80,80,0.55)',
     justifyContent: 'center', alignItems: 'center',
   },
 
