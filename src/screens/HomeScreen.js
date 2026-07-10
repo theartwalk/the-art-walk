@@ -399,24 +399,25 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   navRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
+    alignSelf: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   navPill: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 50, padding: 6,
-    gap: 4,
+    backgroundColor: 'rgba(40,40,40,0.85)',
+    borderRadius: 50, padding: 7, gap: 2,
   },
   navBtn: {
-    width: 58, height: 56, borderRadius: 28,
+    width: 62, height: 54, borderRadius: 14,
     justifyContent: 'center', alignItems: 'center',
   },
   navBtnActive: {
     backgroundColor: '#fff',
+    borderRadius: 14,
   },
   searchPill: {
-    width: 70, height: 70, borderRadius: 35,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    width: 68, height: 68, borderRadius: 34,
+    backgroundColor: 'rgba(40,40,40,0.85)',
     justifyContent: 'center', alignItems: 'center',
   },
 
