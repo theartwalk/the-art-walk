@@ -37,6 +37,8 @@ export async function fetchEvents() {
       color:       e.color || '#888888',
       description: e.description || '',
       imageUrl:    e.image_url || null,
+      mediaUrl:    e.image_url || null,
+      mediaType:   e.image_url ? 'image' : null,
     }));
   } catch (e) {
     console.log('Supabase fetch error:', e.message);

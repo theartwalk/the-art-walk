@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Share, Linking, StatusBar, Alert,
+  Share, Linking, StatusBar, Alert, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -64,18 +64,30 @@ export default function EventDetailScreen({ route, navigation }) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Large color hero */}
+        {/* Large hero — poster image if available, else colour block */}
         <View style={[styles.hero, { backgroundColor: event.color }]}>
-          <View
-            style={[
-              styles.badgePill,
-              { backgroundColor: badgeColors[event.badgeType] || '#444' },
-            ]}
-          >
-            <Text style={styles.badgePillText}>{event.badge}</Text>
-          </View>
-          <View style={styles.heroCircleOuter} />
-          <View style={styles.heroCircleInner} />
+          {(event.imageUrl || event.mediaUrl) ? (
+            <Image
+              source={{ uri: event.imageUrl || event.mediaUrl }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+            />
+          ) : (
+            <>
+              <View style={styles.heroCircleOuter} />
+              <View style={styles.heroCircleInner} />
+            </>
+          )}
+          {event.badge ? (
+            <View
+              style={[
+                styles.badgePill,
+                { backgroundColor: badgeColors[event.badgeType] || '#444' },
+              ]}
+            >
+              <Text style={styles.badgePillText}>{event.badge}</Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Content */}
