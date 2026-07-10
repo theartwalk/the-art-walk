@@ -111,7 +111,11 @@ function EventCard({ item, index, onPress, savedState, onSave }) {
     >
       {/* Background — real image if available, else abstract art */}
       {item.mediaUrl && item.mediaType === 'image' ? (
-        <Image source={{ uri: item.mediaUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <>
+          <Image source={{ uri: item.mediaUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          {/* Dark overlay so poster text doesn't clash with card text */}
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.45)' }]} />
+        </>
       ) : (
         <>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: item.color }]} />
@@ -121,8 +125,8 @@ function EventCard({ item, index, onPress, savedState, onSave }) {
 
       {/* Gradient overlay — transparent top → black bottom */}
       <LinearGradient
-        colors={['transparent', 'transparent', 'rgba(0,0,0,0.55)', 'rgba(0,0,0,0.92)']}
-        locations={[0, 0.35, 0.65, 1]}
+        colors={['transparent', 'transparent', 'rgba(0,0,0,0.55)', 'rgba(0,0,0,0.95)']}
+        locations={[0, 0.3, 0.6, 1]}
         style={StyleSheet.absoluteFill}
       />
 
