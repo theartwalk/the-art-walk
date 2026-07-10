@@ -178,6 +178,7 @@ export default function HomeScreen({ navigation }) {
   const [events, setEvents]       = useState(mockEvents);
   const [city, setCity]           = useState('Delhi NCR');
   const [cityOpen, setCityOpen]   = useState(false);
+  const [activeTab, setActiveTab] = useState('feed');
 
   useEffect(() => {
     fetchEvents().then(data => {
@@ -264,26 +265,37 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {/* ── Bottom navigation ── */}
-      <View style={[s.bottomArea, { paddingBottom: insets.bottom + 8 }]}>
-        <View style={s.navPill}>
-          <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Map')}>
-            <Ionicons name="map-outline" size={20} color="rgba(255,255,255,0.45)" />
-          </TouchableOpacity>
-          <View style={s.navSep} />
-          <TouchableOpacity style={s.navBtn}>
-            <Ionicons name="apps" size={20} color="#fff" />
-          </TouchableOpacity>
-          <View style={s.navSep} />
-          <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Alerts')}>
-            <Ionicons name="people-outline" size={20} color="rgba(255,255,255,0.45)" />
-          </TouchableOpacity>
-          <View style={s.navSep} />
-          <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Saved')}>
-            <Ionicons name="calendar-outline" size={20} color="rgba(255,255,255,0.45)" />
-          </TouchableOpacity>
-          <View style={s.navSep} />
-          <TouchableOpacity style={s.navBtn}>
-            <Ionicons name="search-outline" size={20} color="rgba(255,255,255,0.45)" />
+      <View style={[s.bottomArea, { paddingBottom: insets.bottom + 12 }]}>
+        <View style={s.navRow}>
+          {/* Main pill — 4 tabs */}
+          <View style={s.navPill}>
+            {[
+              { key: 'map',    icon: 'map-outline',      onPress: () => navigation.navigate('Map') },
+              { key: 'feed',   icon: 'menu-outline' },
+              { key: 'people', icon: 'people-outline',   onPress: () => navigation.navigate('Alerts') },
+              { key: 'saved',  icon: 'calendar-outline', onPress: () => navigation.navigate('Saved') },
+            ].map(tab => {
+              const active = activeTab === tab.key;
+              return (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={[s.navBtn, active && s.navBtnActive]}
+                  onPress={() => { setActiveTab(tab.key); tab.onPress?.(); }}
+                  activeOpacity={0.75}
+                >
+                  <Ionicons
+                    name={tab.icon}
+                    size={22}
+                    color={active ? '#C84030' : 'rgba(255,255,255,0.65)'}
+                  />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Search pill — separate */}
+          <TouchableOpacity style={s.searchPill} activeOpacity={0.75}>
+            <Ionicons name="search" size={22} color="rgba(255,255,255,0.65)" />
           </TouchableOpacity>
         </View>
       </View>
@@ -386,15 +398,27 @@ const s = StyleSheet.create({
     position: 'absolute', bottom: 0, left: 0, right: 0,
     alignItems: 'center',
   },
-  navPill: {
-    width: W * 0.82,
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(18,18,18,0.92)',
-    borderRadius: 36, paddingVertical: 5,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+  navRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
   },
-  navBtn: { flex: 1, height: 48, justifyContent: 'center', alignItems: 'center' },
-  navSep: { width: 1, height: 22, backgroundColor: 'rgba(255,255,255,0.1)' },
+  navPill: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 50, padding: 6,
+    gap: 4,
+  },
+  navBtn: {
+    width: 58, height: 56, borderRadius: 28,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  navBtnActive: {
+    backgroundColor: '#fff',
+  },
+  searchPill: {
+    width: 70, height: 70, borderRadius: 35,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center', alignItems: 'center',
+  },
 
   // City picker
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
