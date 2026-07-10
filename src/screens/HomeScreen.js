@@ -89,7 +89,7 @@ function EventCard({ item, index, onPress, savedState, onSave }) {
       {item.mediaUrl && item.mediaType === 'image' ? (
         <>
           <Image source={{ uri: item.mediaUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.52)' }]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.68)' }]} />
         </>
       ) : (
         <>
@@ -385,12 +385,12 @@ const s = StyleSheet.create({
   bottomArea: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', gap: 12,
-    paddingHorizontal: 24,
+    justifyContent: 'center', gap: 10,
   },
   navPill: {
-    flex: 1, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(18,18,18,0.9)',
+    width: W * 0.67,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(18,18,18,0.92)',
     borderRadius: 36, paddingVertical: 5,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
@@ -398,7 +398,7 @@ const s = StyleSheet.create({
   navSep: { width: 1, height: 22, backgroundColor: 'rgba(255,255,255,0.1)' },
   searchBtn: {
     width: 58, height: 58, borderRadius: 29,
-    backgroundColor: 'rgba(18,18,18,0.9)',
+    backgroundColor: 'rgba(18,18,18,0.92)',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center', alignItems: 'center',
   },
