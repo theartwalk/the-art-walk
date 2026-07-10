@@ -3,8 +3,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   Dimensions, StatusBar, Image, Modal, Pressable,
 } from 'react-native';
-
-const LOGO_DARK = require('../../assets/logo-dark.png');
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,47 +11,45 @@ import { events as mockEvents } from '../data/mockData';
 import { fetchEvents } from '../lib/supabase';
 
 const { width: W, height: H } = Dimensions.get('window');
-
 const CITIES = ['Delhi NCR', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad', 'Kolkata', 'Jaipur', 'Pune'];
 
-// ── Abstract art compositions (fallback when no poster) ────────────────────
+// ── Abstract art fallback ──────────────────────────────────────────────────
 function ArtComposition({ color, index }) {
-  const comp = index % 6;
+  const comp  = index % 6;
   const dark  = darken(color, 0.3);
   const light = lighten(color, 0.25);
-
   if (comp === 0) return (
     <View style={StyleSheet.absoluteFill}>
-      <View style={[sh.bigCircle,  { backgroundColor: light, top: -W*0.3,  left: -W*0.3  }]} />
-      <View style={[sh.smallCircle,{ backgroundColor: dark,  bottom: H*0.3, right:-W*0.1  }]} />
-      <View style={[sh.thinRect,   { backgroundColor: dark,  top: H*0.25,  left: W*0.1, transform:[{rotate:'15deg'}] }]} />
+      <View style={[sh.bigCircle,   { backgroundColor: light, top: -W*0.3,  left: -W*0.3  }]} />
+      <View style={[sh.smallCircle, { backgroundColor: dark,  bottom: H*0.3, right:-W*0.1  }]} />
+      <View style={[sh.thinRect,    { backgroundColor: dark,  top: H*0.25,  left: W*0.1, transform:[{rotate:'15deg'}] }]} />
     </View>
   );
   if (comp === 1) return (
     <View style={StyleSheet.absoluteFill}>
-      <View style={[sh.bigRect,  { backgroundColor: light, top: H*0.05, left: W*0.55, transform:[{rotate:'-8deg'}] }]} />
-      <View style={[sh.bigCircle,{ backgroundColor: dark,  top: H*0.1,  left:-W*0.15, opacity:0.6 }]} />
-      <View style={[sh.medCircle,{ backgroundColor: light, bottom:H*0.25, right:W*0.1 }]} />
+      <View style={[sh.bigRect,   { backgroundColor: light, top: H*0.05, left: W*0.55, transform:[{rotate:'-8deg'}] }]} />
+      <View style={[sh.bigCircle, { backgroundColor: dark,  top: H*0.1,  left:-W*0.15, opacity:0.6 }]} />
+      <View style={[sh.medCircle, { backgroundColor: light, bottom:H*0.25, right:W*0.1 }]} />
     </View>
   );
   if (comp === 2) return (
     <View style={StyleSheet.absoluteFill}>
-      <View style={[sh.halfCircle, { backgroundColor: light, top:-H*0.05, right:-W*0.1  }]} />
-      <View style={[sh.smallCircle,{ backgroundColor: dark,  top: H*0.2,  left: W*0.1  }]} />
+      <View style={[sh.halfCircle, { backgroundColor: light, top:-H*0.05, right:-W*0.1 }]} />
+      <View style={[sh.smallCircle,{ backgroundColor: dark,  top: H*0.2,  left: W*0.1 }]} />
       <View style={[sh.bigRect,    { backgroundColor: dark,  bottom:H*0.2, left:-W*0.15, transform:[{rotate:'20deg'}] }]} />
     </View>
   );
   if (comp === 3) return (
     <View style={StyleSheet.absoluteFill}>
-      <View style={[sh.bigCircle,{ backgroundColor: dark,  bottom:H*0.1, right:-W*0.25 }]} />
-      <View style={[sh.thinRect, { backgroundColor: light, top:H*0.15,  left:W*0.05, width:W*0.9, transform:[{rotate:'-3deg'}] }]} />
-      <View style={[sh.medCircle,{ backgroundColor: light, top:H*0.22,  left:W*0.55 }]} />
+      <View style={[sh.bigCircle, { backgroundColor: dark,  bottom:H*0.1, right:-W*0.25 }]} />
+      <View style={[sh.thinRect,  { backgroundColor: light, top:H*0.15,  left:W*0.05, width:W*0.9, transform:[{rotate:'-3deg'}] }]} />
+      <View style={[sh.medCircle, { backgroundColor: light, top:H*0.22,  left:W*0.55 }]} />
     </View>
   );
   if (comp === 4) return (
     <View style={StyleSheet.absoluteFill}>
-      <View style={[sh.bigRect,  { backgroundColor: light, top:H*0.08, left:W*0.08, transform:[{rotate:'5deg'}] }]} />
-      <View style={[sh.bigCircle,{ backgroundColor: dark,  top:H*0.02, right:-W*0.3, opacity:0.7 }]} />
+      <View style={[sh.bigRect,   { backgroundColor: light, top:H*0.08, left:W*0.08, transform:[{rotate:'5deg'}] }]} />
+      <View style={[sh.bigCircle, { backgroundColor: dark,  top:H*0.02, right:-W*0.3, opacity:0.7 }]} />
     </View>
   );
   return (
@@ -65,27 +62,20 @@ function ArtComposition({ color, index }) {
 
 function darken(hex, amount) {
   const n = parseInt(hex.replace('#',''), 16);
-  const r = Math.max(0, (n>>16) - Math.round(255*amount));
-  const g = Math.max(0, ((n>>8)&0xff) - Math.round(255*amount));
-  const b = Math.max(0, (n&0xff) - Math.round(255*amount));
-  return `rgb(${r},${g},${b})`;
+  return `rgb(${Math.max(0,(n>>16)-Math.round(255*amount))},${Math.max(0,((n>>8)&0xff)-Math.round(255*amount))},${Math.max(0,(n&0xff)-Math.round(255*amount))})`;
 }
 function lighten(hex, amount) {
   const n = parseInt(hex.replace('#',''), 16);
-  const r = Math.min(255, (n>>16) + Math.round(255*amount));
-  const g = Math.min(255, ((n>>8)&0xff) + Math.round(255*amount));
-  const b = Math.min(255, (n&0xff) + Math.round(255*amount));
-  return `rgb(${r},${g},${b})`;
+  return `rgb(${Math.min(255,(n>>16)+Math.round(255*amount))},${Math.min(255,((n>>8)&0xff)+Math.round(255*amount))},${Math.min(255,(n&0xff)+Math.round(255*amount))})`;
 }
-
 function getBadgeColor(type) {
   if (type === 'tonight') return '#C84030';
   if (type === 'openCall') return '#1A6B3C';
   if (type === 'free') return '#1A4A7A';
-  return 'rgba(0,0,0,0.55)';
+  return 'rgba(0,0,0,0.6)';
 }
 
-// ── Single full-screen event card ──────────────────────────────────────────
+// ── Event card ─────────────────────────────────────────────────────────────
 function EventCard({ item, index, onPress, savedState, onSave }) {
   const insets = useSafeAreaInsets();
   const tags = item.tags?.length > 0
@@ -93,16 +83,13 @@ function EventCard({ item, index, onPress, savedState, onSave }) {
     : [item.type, item.price === 'Free' ? 'Free Entry' : item.price].filter(Boolean);
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.98}
-      onPress={onPress}
-      style={[s.card, { height: H }]}
-    >
-      {/* ── Background ── */}
+    <TouchableOpacity activeOpacity={0.98} onPress={onPress} style={[s.card, { height: H }]}>
+
+      {/* Background */}
       {item.mediaUrl && item.mediaType === 'image' ? (
         <>
           <Image source={{ uri: item.mediaUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.28)' }]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.52)' }]} />
         </>
       ) : (
         <>
@@ -111,30 +98,25 @@ function EventCard({ item, index, onPress, savedState, onSave }) {
         </>
       )}
 
-      {/* ── Gradient — light top, heavy bottom ── */}
+      {/* Gradient */}
       <LinearGradient
-        colors={['rgba(0,0,0,0.08)', 'transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.96)']}
-        locations={[0, 0.25, 0.62, 1]}
+        colors={['rgba(0,0,0,0.05)', 'transparent', 'rgba(0,0,0,0.65)', 'rgba(0,0,0,0.97)']}
+        locations={[0, 0.22, 0.6, 1]}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* ── Badge top-left ── */}
+      {/* Badge */}
       {item.badge ? (
-        <View style={[s.badge, { backgroundColor: getBadgeColor(item.badgeType), top: insets.top + 80 }]}>
+        <View style={[s.badge, { top: insets.top + 76, backgroundColor: getBadgeColor(item.badgeType) }]}>
           <Text style={s.badgeText}>{item.badge}</Text>
         </View>
       ) : null}
 
-      {/* ── Card content at bottom ── */}
-      <View style={[s.cardContent, { paddingBottom: insets.bottom + 110 }]}>
-
-        {/* Title */}
+      {/* Card content */}
+      <View style={[s.cardContent, { paddingBottom: insets.bottom + 116 }]}>
         <Text style={s.cardTitle} numberOfLines={3}>{item.title}</Text>
-
-        {/* Artist / curator line */}
         <Text style={s.cardArtist} numberOfLines={1}>{item.venue}</Text>
 
-        {/* Tags */}
         <View style={s.tagRow}>
           {tags.slice(0, 3).map((t, i) => (
             <View key={i} style={s.tagPill}>
@@ -143,47 +125,43 @@ function EventCard({ item, index, onPress, savedState, onSave }) {
           ))}
         </View>
 
-        {/* Divider */}
         <View style={s.divider} />
 
-        {/* Gallery row */}
         <View style={s.galleryRow}>
           <View style={[s.galDot, { backgroundColor: item.color || '#C8A96A' }]} />
           <Text style={s.galleryName}>{item.venue}</Text>
           <Text style={s.galleryArea}>· {item.area || 'Delhi NCR'}</Text>
         </View>
 
-        {/* Date */}
-        <Text style={s.dateText}>{item.dateLabel}  {item.time ? `· ${item.time}` : ''}</Text>
+        <Text style={s.dateText}>
+          {item.dateLabel}{item.time ? `  ·  ${item.time}` : ''}
+        </Text>
       </View>
 
-      {/* ── Floating save button ── */}
+      {/* Floating save button */}
       <TouchableOpacity
-        style={[s.saveBtn, { bottom: insets.bottom + 118 }, savedState && s.saveBtnActive]}
+        style={[s.saveBtn, { bottom: insets.bottom + 124 }, savedState && s.saveBtnSaved]}
         onPress={onSave}
         activeOpacity={0.85}
       >
-        <Text style={s.saveBtnIcon}>{savedState ? '🔖' : '🔖'}</Text>
+        <Ionicons name={savedState ? 'bookmark' : 'bookmark-outline'} size={24} color="#fff" />
       </TouchableOpacity>
     </TouchableOpacity>
   );
 }
 
-// ── City picker modal ──────────────────────────────────────────────────────
+// ── City picker ────────────────────────────────────────────────────────────
 function CityPicker({ visible, city, onSelect, onClose }) {
   return (
-    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
-      <Pressable style={s.modalBackdrop} onPress={onClose}>
-        <View style={s.citySheet}>
-          <Text style={s.citySheetTitle}>Select City</Text>
+    <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose}>
+      <Pressable style={s.backdrop} onPress={onClose}>
+        <View style={s.sheet}>
+          <View style={s.sheetHandle} />
+          <Text style={s.sheetTitle}>SELECT CITY</Text>
           {CITIES.map(c => (
-            <TouchableOpacity
-              key={c}
-              style={[s.cityRow, c === city && s.cityRowActive]}
-              onPress={() => { onSelect(c); onClose(); }}
-            >
-              <Text style={[s.cityRowText, c === city && s.cityRowTextActive]}>{c}</Text>
-              {c === city && <Text style={s.cityCheck}>✓</Text>}
+            <TouchableOpacity key={c} style={s.cityRow} onPress={() => { onSelect(c); onClose(); }}>
+              <Text style={[s.cityText, c === city && s.cityTextActive]}>{c}</Text>
+              {c === city && <Ionicons name="checkmark" size={18} color="#C8A96A" />}
             </TouchableOpacity>
           ))}
         </View>
@@ -195,11 +173,11 @@ function CityPicker({ visible, city, onSelect, onClose }) {
 // ── Main screen ────────────────────────────────────────────────────────────
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const [activeIdx, setActiveIdx]   = useState(0);
-  const [savedMap, setSavedMap]     = useState({});
-  const [events, setEvents]         = useState(mockEvents);
-  const [city, setCity]             = useState('Delhi NCR');
-  const [cityOpen, setCityOpen]     = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [savedMap, setSavedMap]   = useState({});
+  const [events, setEvents]       = useState(mockEvents);
+  const [city, setCity]           = useState('Delhi NCR');
+  const [cityOpen, setCityOpen]   = useState(false);
 
   useEffect(() => {
     fetchEvents().then(data => {
@@ -207,7 +185,7 @@ export default function HomeScreen({ navigation }) {
     });
   }, []);
 
-  const onViewRef    = useRef(({ viewableItems }) => {
+  const onViewRef     = useRef(({ viewableItems }) => {
     if (viewableItems.length > 0) setActiveIdx(viewableItems[0].index ?? 0);
   });
   const viewConfigRef = useRef({ itemVisiblePercentThreshold: 60 });
@@ -217,8 +195,8 @@ export default function HomeScreen({ navigation }) {
     setSavedMap(prev => ({ ...prev, [id]: next }));
     try {
       if (next) {
-        const event = events.find(e => e.id === id);
-        await AsyncStorage.setItem(`saved_${id}`, JSON.stringify(event));
+        const ev = events.find(e => e.id === id);
+        await AsyncStorage.setItem(`saved_${id}`, JSON.stringify(ev));
       } else {
         await AsyncStorage.removeItem(`saved_${id}`);
       }
@@ -229,7 +207,7 @@ export default function HomeScreen({ navigation }) {
     <View style={s.screen}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* ── Full-screen vertical feed ── */}
+      {/* Feed */}
       <FlatList
         data={events}
         keyExtractor={i => i.id}
@@ -255,64 +233,61 @@ export default function HomeScreen({ navigation }) {
 
       {/* ── Top bar ── */}
       <View style={[s.topBar, { paddingTop: insets.top + 10 }]}>
-        {/* Profile / logo button */}
+        {/* User profile button */}
         <TouchableOpacity
-          style={s.profileBtn}
+          style={s.userBtn}
           onLongPress={() => navigation.navigate('Admin')}
           delayLongPress={1500}
           activeOpacity={0.85}
         >
-          <Image source={LOGO_DARK} style={s.profileImg} resizeMode="contain" />
+          <Ionicons name="person-outline" size={22} color="#111" />
+          <View style={s.notifDot} />
         </TouchableOpacity>
 
         {/* Right controls */}
         <View style={s.topRight}>
-          {/* Filter icon */}
-          <TouchableOpacity style={s.iconPill} onPress={() => navigation.navigate('Alerts')}>
-            <Text style={s.iconPillText}>⊟</Text>
+          <TouchableOpacity style={s.filterBtn} onPress={() => navigation.navigate('Alerts')}>
+            <Ionicons name="options-outline" size={20} color="#fff" />
           </TouchableOpacity>
-          {/* City selector */}
           <TouchableOpacity style={s.cityPill} onPress={() => setCityOpen(true)}>
-            <Text style={s.cityPillText}>{city}  ▾</Text>
+            <Text style={s.cityPillText}>{city}</Text>
+            <Ionicons name="chevron-down" size={14} color="#fff" style={{ marginLeft: 4 }} />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* ── Dot indicators — right side ── */}
-      <View style={[s.dotsCol, { top: H * 0.35 }]}>
+      {/* Scroll dots */}
+      <View style={[s.dotsCol, { top: H * 0.38 }]}>
         {events.map((_, i) => (
           <View key={i} style={[s.dotV, i === activeIdx && s.dotVActive]} />
         ))}
       </View>
 
       {/* ── Bottom navigation ── */}
-      <View style={[s.bottomArea, { paddingBottom: insets.bottom + 6 }]}>
-        {/* Left pill nav */}
+      <View style={[s.bottomArea, { paddingBottom: insets.bottom + 8 }]}>
         <View style={s.navPill}>
           <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Map')}>
-            <Text style={s.navIcon}>🗺</Text>
+            <Ionicons name="map-outline" size={22} color="rgba(255,255,255,0.45)" />
           </TouchableOpacity>
-          <View style={s.navDivider} />
+          <View style={s.navSep} />
           <TouchableOpacity style={s.navBtn}>
-            <Text style={[s.navIcon, s.navIconActive]}>▤</Text>
+            <Ionicons name="apps" size={22} color="#fff" />
           </TouchableOpacity>
-          <View style={s.navDivider} />
+          <View style={s.navSep} />
           <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Alerts')}>
-            <Text style={s.navIcon}>👥</Text>
+            <Ionicons name="people-outline" size={22} color="rgba(255,255,255,0.45)" />
           </TouchableOpacity>
-          <View style={s.navDivider} />
+          <View style={s.navSep} />
           <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Saved')}>
-            <Text style={s.navIcon}>🗓</Text>
+            <Ionicons name="calendar-outline" size={22} color="rgba(255,255,255,0.45)" />
           </TouchableOpacity>
         </View>
 
-        {/* Right search pill */}
-        <TouchableOpacity style={s.searchPill}>
-          <Text style={s.searchIcon}>🔍</Text>
+        <TouchableOpacity style={s.searchBtn}>
+          <Ionicons name="search-outline" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      {/* ── City picker ── */}
       <CityPicker
         visible={cityOpen}
         city={city}
@@ -326,91 +301,82 @@ export default function HomeScreen({ navigation }) {
 // ── Styles ─────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#000' },
+  card:   { width: W, height: H, overflow: 'hidden' },
 
-  card: { width: W, height: H, overflow: 'hidden' },
-
-  // Badge
   badge: {
     position: 'absolute', left: 20,
-    paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 4,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4,
   },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
 
-  // Card content
   cardContent: {
-    position: 'absolute', bottom: 0, left: 0, right: 80,
+    position: 'absolute', bottom: 0, left: 0, right: 76,
     paddingHorizontal: 22,
   },
   cardTitle: {
     fontSize: 30, fontWeight: '800', color: '#fff',
-    letterSpacing: 0.2, lineHeight: 35,
-    marginBottom: 6, fontStyle: 'italic',
+    letterSpacing: 0.2, lineHeight: 34, marginBottom: 7, fontStyle: 'italic',
   },
   cardArtist: {
-    fontSize: 15, fontWeight: '700', color: '#fff',
-    marginBottom: 14, letterSpacing: 0.2,
+    fontSize: 15, fontWeight: '700', color: '#fff', marginBottom: 14,
   },
-
-  // Tags
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 16 },
   tagPill: {
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.5)',
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.55)',
     borderRadius: 20, paddingHorizontal: 13, paddingVertical: 5,
   },
   tagText: { color: '#fff', fontSize: 12, fontWeight: '500' },
-
-  // Divider
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.2)', marginBottom: 14 },
-
-  // Gallery row
+  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.18)', marginBottom: 14 },
   galleryRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
   galDot: { width: 9, height: 9, borderRadius: 5, marginRight: 8 },
   galleryName: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  galleryArea: { color: 'rgba(255,255,255,0.55)', fontSize: 13, marginLeft: 5 },
+  galleryArea: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginLeft: 4 },
+  dateText: { color: 'rgba(255,255,255,0.5)', fontSize: 12 },
 
-  dateText: { color: 'rgba(255,255,255,0.55)', fontSize: 12, letterSpacing: 0.2 },
-
-  // Floating save button
   saveBtn: {
-    position: 'absolute', right: 18,
+    position: 'absolute', right: 16,
     width: 54, height: 54, borderRadius: 27,
     backgroundColor: '#E03020',
     justifyContent: 'center', alignItems: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35, shadowRadius: 8, elevation: 8,
+    shadowOpacity: 0.4, shadowRadius: 8, elevation: 10,
   },
-  saveBtnActive: { backgroundColor: '#C8A96A' },
-  saveBtnIcon: { fontSize: 22, color: '#fff' },
+  saveBtnSaved: { backgroundColor: '#C8A96A' },
 
   // Top bar
   topBar: {
     position: 'absolute', top: 0, left: 0, right: 0,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 16, paddingBottom: 6,
+    paddingHorizontal: 16, paddingBottom: 8,
   },
-  profileBtn: {
-    width: 52, height: 52, borderRadius: 26, overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)',
+  userBtn: {
+    width: 50, height: 50, borderRadius: 25,
+    backgroundColor: '#fff',
+    justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25, shadowRadius: 6, elevation: 6,
   },
-  profileImg: { width: 52, height: 52, borderRadius: 26 },
+  notifDot: {
+    position: 'absolute', top: 6, right: 6,
+    width: 10, height: 10, borderRadius: 5,
+    backgroundColor: '#E03020',
+    borderWidth: 1.5, borderColor: '#fff',
+  },
   topRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  iconPill: {
-    width: 42, height: 42, borderRadius: 21,
+  filterBtn: {
+    width: 44, height: 44, borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.18)',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center', alignItems: 'center',
   },
-  iconPillText: { color: '#fff', fontSize: 18 },
   cityPill: {
+    flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 10,
     backgroundColor: 'rgba(255,255,255,0.18)',
     borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
   },
-  cityPillText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  cityPillText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 
-  // Dots
   dotsCol: { position: 'absolute', right: 10, flexDirection: 'column', gap: 5 },
   dotV: { width: 4, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)' },
   dotVActive: { height: 18, borderRadius: 2, backgroundColor: '#fff' },
@@ -420,53 +386,46 @@ const s = StyleSheet.create({
     position: 'absolute', bottom: 0, left: 0, right: 0,
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 12,
-    paddingHorizontal: 20, paddingTop: 8,
+    paddingHorizontal: 24,
   },
   navPill: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(20,20,20,0.85)',
-    borderRadius: 32, paddingVertical: 4, paddingHorizontal: 6,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
-    backdropFilter: 'blur(10px)',
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(18,18,18,0.9)',
+    borderRadius: 36, paddingVertical: 5,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
-  navBtn: {
-    width: 52, height: 44, justifyContent: 'center', alignItems: 'center',
-  },
-  navDivider: { width: 1, height: 20, backgroundColor: 'rgba(255,255,255,0.12)' },
-  navIcon: { fontSize: 19, color: 'rgba(255,255,255,0.45)' },
-  navIconActive: { color: '#C8A96A' },
-  searchPill: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: 'rgba(20,20,20,0.85)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+  navBtn: { flex: 1, height: 48, justifyContent: 'center', alignItems: 'center' },
+  navSep: { width: 1, height: 22, backgroundColor: 'rgba(255,255,255,0.1)' },
+  searchBtn: {
+    width: 58, height: 58, borderRadius: 29,
+    backgroundColor: 'rgba(18,18,18,0.9)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center', alignItems: 'center',
   },
-  searchIcon: { fontSize: 20 },
 
-  // City picker modal
-  modalBackdrop: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
+  // City picker
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
+  sheet: {
+    backgroundColor: '#161616', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    paddingTop: 16, paddingBottom: 44, paddingHorizontal: 24,
   },
-  citySheet: {
-    backgroundColor: '#1A1A1A', borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    paddingTop: 20, paddingBottom: 40, paddingHorizontal: 24,
+  sheetHandle: {
+    width: 36, height: 4, borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignSelf: 'center', marginBottom: 20,
   },
-  citySheetTitle: {
-    color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '700',
-    letterSpacing: 2, marginBottom: 16,
+  sheetTitle: {
+    color: 'rgba(255,255,255,0.35)', fontSize: 11,
+    fontWeight: '700', letterSpacing: 2.5, marginBottom: 8,
   },
   cityRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.08)',
+    paddingVertical: 15, borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.07)',
   },
-  cityRowActive: {},
-  cityRowText: { color: '#fff', fontSize: 16 },
-  cityRowTextActive: { color: '#C8A96A', fontWeight: '700' },
-  cityCheck: { color: '#C8A96A', fontSize: 18 },
+  cityText: { color: '#fff', fontSize: 17 },
+  cityTextActive: { color: '#C8A96A', fontWeight: '700' },
 });
 
-// Abstract shape styles
 const sh = StyleSheet.create({
   bigCircle:   { position:'absolute', width:W*0.75, height:W*0.75, borderRadius:W*0.375, opacity:0.35 },
   medCircle:   { position:'absolute', width:W*0.42, height:W*0.42, borderRadius:W*0.21,  opacity:0.4  },
