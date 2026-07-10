@@ -140,7 +140,7 @@ function EventCard({ item, index, onPress, savedState, onSave }) {
 
       {/* Floating save button */}
       <TouchableOpacity
-        style={[s.saveBtn, { bottom: insets.bottom + 124 }, savedState && s.saveBtnSaved]}
+        style={[s.saveBtn, { bottom: insets.bottom + 148 }, savedState && s.saveBtnSaved]}
         onPress={onSave}
         activeOpacity={0.85}
       >
@@ -267,7 +267,6 @@ export default function HomeScreen({ navigation }) {
       {/* ── Bottom navigation ── */}
       <View style={[s.bottomArea, { paddingBottom: insets.bottom + 12 }]}>
         <View style={s.navRow}>
-          {/* Main pill — 4 tabs */}
           <View style={s.navPill}>
             {[
               { key: 'map',    icon: 'map-outline',      onPress: () => navigation.navigate('Map') },
@@ -292,13 +291,16 @@ export default function HomeScreen({ navigation }) {
               );
             })}
           </View>
-
-          {/* Search pill — separate */}
-          <TouchableOpacity style={s.searchPill} activeOpacity={0.75}>
-            <Ionicons name="search" size={20} color="rgba(255,255,255,0.7)" />
-          </TouchableOpacity>
         </View>
       </View>
+
+      {/* Floating search — right side, below save button */}
+      <TouchableOpacity
+        style={[s.searchFloat, { bottom: insets.bottom + 84 }]}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="search" size={20} color="rgba(255,255,255,0.85)" />
+      </TouchableOpacity>
 
       <CityPicker
         visible={cityOpen}
@@ -415,10 +417,13 @@ const s = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
   },
-  searchPill: {
-    width: 56, height: 56, borderRadius: 28,
-    backgroundColor: 'rgba(80,80,80,0.55)',
+  searchFloat: {
+    position: 'absolute', right: 16,
+    width: 54, height: 54, borderRadius: 27,
+    backgroundColor: 'rgba(30,30,30,0.75)',
     justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
   },
 
   // City picker
