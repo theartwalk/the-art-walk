@@ -266,41 +266,35 @@ export default function HomeScreen({ navigation }) {
 
       {/* ── Bottom navigation ── */}
       <View style={[s.bottomArea, { paddingBottom: insets.bottom + 12 }]}>
-        <View style={s.navRow}>
-          <View style={s.navPill}>
-            {[
-              { key: 'map',    icon: 'map-outline',      onPress: () => navigation.navigate('Map') },
-              { key: 'feed',   icon: 'menu-outline' },
-              { key: 'people', icon: 'people-outline',   onPress: () => navigation.navigate('Alerts') },
-              { key: 'saved',  icon: 'calendar-outline', onPress: () => navigation.navigate('Saved') },
-            ].map(tab => {
-              const active = activeTab === tab.key;
-              return (
-                <TouchableOpacity
-                  key={tab.key}
-                  style={[s.navBtn, active && s.navBtnActive]}
-                  onPress={() => { setActiveTab(tab.key); tab.onPress?.(); }}
-                  activeOpacity={0.75}
-                >
-                  <Ionicons
-                    name={tab.icon}
-                    size={20}
-                    color={active ? '#C84030' : 'rgba(255,255,255,0.7)'}
-                  />
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+        <View style={s.navPill}>
+          {[
+            { key: 'map',    icon: 'map-outline',      onPress: () => navigation.navigate('Map') },
+            { key: 'feed',   icon: 'menu-outline' },
+            { key: 'people', icon: 'people-outline',   onPress: () => navigation.navigate('Alerts') },
+            { key: 'saved',  icon: 'calendar-outline', onPress: () => navigation.navigate('Saved') },
+          ].map(tab => {
+            const active = activeTab === tab.key;
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={[s.navBtn, active && s.navBtnActive]}
+                onPress={() => { setActiveTab(tab.key); tab.onPress?.(); }}
+                activeOpacity={0.75}
+              >
+                <Ionicons
+                  name={tab.icon}
+                  size={20}
+                  color={active ? '#C84030' : 'rgba(255,255,255,0.7)'}
+                />
+              </TouchableOpacity>
+            );
+          })}
         </View>
-      </View>
 
-      {/* Floating search — right side, aligned with nav pill */}
-      <TouchableOpacity
-        style={[s.searchFloat, { bottom: insets.bottom + 12 }]}
-        activeOpacity={0.85}
-      >
-        <Ionicons name="search" size={20} color="rgba(255,255,255,0.85)" />
-      </TouchableOpacity>
+        <TouchableOpacity style={s.searchFloat} activeOpacity={0.85}>
+          <Ionicons name="search" size={20} color="rgba(255,255,255,0.85)" />
+        </TouchableOpacity>
+      </View>
 
       <CityPicker
         visible={cityOpen}
@@ -398,11 +392,10 @@ const s = StyleSheet.create({
   // Bottom nav
   bottomArea: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  navRow: {
-    alignSelf: 'center',
-    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 16,
   },
   navPill: {
     flexDirection: 'row', alignItems: 'center',
@@ -418,7 +411,6 @@ const s = StyleSheet.create({
     borderRadius: 12,
   },
   searchFloat: {
-    position: 'absolute', right: 16,
     width: 54, height: 54, borderRadius: 27,
     backgroundColor: 'rgba(30,30,30,0.75)',
     justifyContent: 'center', alignItems: 'center',
