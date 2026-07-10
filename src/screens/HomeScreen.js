@@ -140,7 +140,7 @@ function EventCard({ item, index, onPress, savedState, onSave }) {
 
       {/* Floating save button */}
       <TouchableOpacity
-        style={[s.saveBtn, { bottom: insets.bottom + 148 }, savedState && s.saveBtnSaved]}
+        style={[s.saveBtn, { bottom: insets.bottom + 76 }, savedState && s.saveBtnSaved]}
         onPress={onSave}
         activeOpacity={0.85}
       >
