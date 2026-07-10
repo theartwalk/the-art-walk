@@ -265,27 +265,29 @@ export default function HomeScreen({ navigation }) {
 
       {/* ── Bottom navigation ── */}
       <View style={[s.bottomArea, { paddingBottom: insets.bottom + 8 }]}>
-        <View style={s.navPill}>
-          <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Map')}>
-            <Ionicons name="map-outline" size={22} color="rgba(255,255,255,0.45)" />
-          </TouchableOpacity>
-          <View style={s.navSep} />
-          <TouchableOpacity style={s.navBtn}>
-            <Ionicons name="apps" size={22} color="#fff" />
-          </TouchableOpacity>
-          <View style={s.navSep} />
-          <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Alerts')}>
-            <Ionicons name="people-outline" size={22} color="rgba(255,255,255,0.45)" />
-          </TouchableOpacity>
-          <View style={s.navSep} />
-          <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Saved')}>
-            <Ionicons name="calendar-outline" size={22} color="rgba(255,255,255,0.45)" />
+        <View style={s.navGroup}>
+          <View style={s.navPill}>
+            <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Map')}>
+              <Ionicons name="map-outline" size={22} color="rgba(255,255,255,0.45)" />
+            </TouchableOpacity>
+            <View style={s.navSep} />
+            <TouchableOpacity style={s.navBtn}>
+              <Ionicons name="apps" size={22} color="#fff" />
+            </TouchableOpacity>
+            <View style={s.navSep} />
+            <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Alerts')}>
+              <Ionicons name="people-outline" size={22} color="rgba(255,255,255,0.45)" />
+            </TouchableOpacity>
+            <View style={s.navSep} />
+            <TouchableOpacity style={s.navBtn} onPress={() => navigation.navigate('Saved')}>
+              <Ionicons name="calendar-outline" size={22} color="rgba(255,255,255,0.45)" />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={s.searchBtn}>
+            <Ionicons name="search-outline" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity style={s.searchBtn}>
-          <Ionicons name="search-outline" size={22} color="#fff" />
-        </TouchableOpacity>
       </View>
 
       <CityPicker
@@ -384,11 +386,13 @@ const s = StyleSheet.create({
   // Bottom nav
   bottomArea: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', gap: 10,
+    alignItems: 'center',
+  },
+  navGroup: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
   },
   navPill: {
-    width: W * 0.67,
+    width: 252,
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: 'rgba(18,18,18,0.92)',
     borderRadius: 36, paddingVertical: 5,
