@@ -314,28 +314,40 @@
         </div>
       </div>
 
-      <!-- Row 4: Date + Date Label -->
+      <!-- Row 4: Start Date + End Date -->
       <div class="form-grid">
         <div class="field">
-          <label>Date *</label>
+          <label>Start Date *</label>
           <input type="date" id="f-date" required oninput="autoDateLabel()">
         </div>
         <div class="field">
-          <label>Date Label</label>
-          <input type="text" id="f-date-label" placeholder="e.g. Sat 24 May · Until Jun 30">
-          <span class="hint">Auto-filled from date — edit freely</span>
+          <label>End Date</label>
+          <input type="date" id="f-end-date" oninput="autoDateLabel()">
         </div>
       </div>
 
-      <!-- Row 5: Time + Price -->
-      <div class="form-grid">
+      <!-- Row 4b: Date Label -->
+      <div class="form-grid cols-1">
         <div class="field">
-          <label>Time</label>
-          <input type="text" id="f-time" placeholder="e.g. 6:00 – 9:00 PM or Apply online">
+          <label>Date Label</label>
+          <input type="text" id="f-date-label" placeholder="e.g. Sat 26 Jul – Sun 30 Aug">
+          <span class="hint">Auto-filled from dates — edit freely</span>
+        </div>
+      </div>
+
+      <!-- Row 5: Opening Time + Regular Hours + Price -->
+      <div class="form-grid cols-3">
+        <div class="field">
+          <label>Opening / Vernissage</label>
+          <input type="text" id="f-time" placeholder="e.g. 6:00 – 9:00 PM">
+        </div>
+        <div class="field">
+          <label>Regular Hours</label>
+          <input type="text" id="f-regular-hours" placeholder="e.g. Tue–Sun: 11am–7pm">
         </div>
         <div class="field">
           <label>Price / Stipend</label>
-          <input type="text" id="f-price" placeholder="e.g. Free · ₹50,000 stipend · ₹20">
+          <input type="text" id="f-price" placeholder="e.g. Free · ₹50,000">
         </div>
       </div>
 
@@ -513,14 +525,15 @@
 
   /* ── Date label auto-fill ── */
   function autoDateLabel() {
-    const val = document.getElementById('f-date').value;
+    const val    = document.getElementById('f-date').value;
+    const endVal = document.getElementById('f-end-date').value;
     if (!val) return;
-    const d = new Date(val + 'T12:00:00');
     const days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const label  = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+    const fmt = v => { const d = new Date(v + 'T12:00:00'); return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`; };
+    const label = endVal ? `${fmt(val)} – ${fmt(endVal)}` : fmt(val);
     const el = document.getElementById('f-date-label');
-    if (!el.value) el.value = label;
+    el.value = label;
   }
 
   /* ── Image upload ── */
@@ -619,18 +632,20 @@
       title,
       type,
       venue,
-      area:       document.getElementById('f-area').value.trim(),
+      area:          document.getElementById('f-area').value.trim(),
       address,
       date,
-      date_label: document.getElementById('f-date-label').value.trim() || date,
-      time:       document.getElementById('f-time').value.trim() || '',
-      price:      document.getElementById('f-price').value.trim() || 'Free',
-      badge:      document.getElementById('f-badge').value.trim() || '',
-      badge_type: document.getElementById('f-badge-type').value || 'soon',
+      end_date:      document.getElementById('f-end-date').value || null,
+      date_label:    document.getElementById('f-date-label').value.trim() || date,
+      time:          document.getElementById('f-time').value.trim() || '',
+      regular_hours: document.getElementById('f-regular-hours').value.trim() || '',
+      price:         document.getElementById('f-price').value.trim() || 'Free',
+      badge:         document.getElementById('f-badge').value.trim() || '',
+      badge_type:    document.getElementById('f-badge-type').value || 'soon',
       tags,
-      color:      document.getElementById('f-color').value,
+      color:         document.getElementById('f-color').value,
       description,
-      image_url:  imageUrl,
+      image_url:     imageUrl,
     };
 
     const { data, error } = await db.from('events').insert([payload]).select();
@@ -666,6 +681,8 @@
     document.getElementById('f-color-picker').value = '#D4A017';
     document.getElementById('f-color-hex').textContent = '#D4A017';
     document.getElementById('f-badge-type').value = 'soon';
+    document.getElementById('f-end-date').value = '';
+    document.getElementById('f-regular-hours').value = '';
     document.querySelectorAll('.swatch').forEach((s, i) => s.classList.toggle('selected', i === 0));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
