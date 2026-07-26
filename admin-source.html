@@ -152,6 +152,53 @@
       border: none; padding: 0; background: transparent; width: 60px;
     }
 
+    /* AI Import */
+    .import-box {
+      background: var(--black); border-radius: 4px;
+      padding: 20px 22px; margin-bottom: 28px;
+    }
+    .import-eyebrow {
+      font-size: 9px; font-weight: 700; letter-spacing: 2.5px;
+      color: var(--gold); margin-bottom: 12px;
+    }
+    .import-row { display: flex; gap: 10px; }
+    .import-input {
+      flex: 1; padding: 10px 13px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px; color: white; font-size: 14px;
+      font-family: inherit;
+    }
+    .import-input::placeholder { color: rgba(255,255,255,0.3); }
+    .import-input:focus { outline: none; border-color: var(--gold); }
+    .import-btn {
+      padding: 10px 20px; background: var(--gold); color: var(--black);
+      border: none; border-radius: 4px; font-size: 11px; font-weight: 700;
+      letter-spacing: 1.5px; cursor: pointer; white-space: nowrap;
+      transition: opacity 0.2s; flex-shrink: 0;
+    }
+    .import-btn:hover { opacity: 0.85; }
+    .import-btn:disabled { opacity: 0.45; cursor: default; }
+    .import-status {
+      font-size: 12px; margin-top: 10px; min-height: 18px;
+      color: rgba(255,255,255,0.5);
+    }
+    .import-status.ok { color: #6FCF97; }
+    .import-status.err { color: #E87070; }
+    .api-key-row {
+      display: flex; align-items: center; gap: 8px; margin-top: 10px;
+    }
+    .api-key-input {
+      flex: 1; padding: 7px 11px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px; color: rgba(255,255,255,0.6);
+      font-size: 12px; font-family: monospace;
+    }
+    .api-key-input::placeholder { color: rgba(255,255,255,0.2); }
+    .api-key-input:focus { outline: none; border-color: var(--gold); }
+    .api-key-label { font-size: 10px; color: rgba(255,255,255,0.3); white-space: nowrap; }
+
     /* Badge presets */
     .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; margin-bottom: 10px; }
     .badge-chip {
@@ -264,6 +311,20 @@
   </div>
 
   <div class="container">
+
+    <!-- ── AI IMPORT ── -->
+    <div class="import-box">
+      <div class="import-eyebrow">✦ AI IMPORT — PASTE A URL TO AUTO-FILL THE FORM</div>
+      <div class="import-row">
+        <input type="url" id="import-url" class="import-input" placeholder="Paste exhibition page URL or gallery website link…">
+        <button class="import-btn" id="import-btn" onclick="importFromUrl()">IMPORT WITH AI</button>
+      </div>
+      <div class="import-status" id="import-status"></div>
+      <div class="api-key-row">
+        <span class="api-key-label">CLAUDE API KEY</span>
+        <input type="password" id="claude-api-key" class="api-key-input" placeholder="sk-ant-…  (saved in browser)" oninput="saveApiKey(this.value)">
+      </div>
+    </div>
 
     <!-- ── ADD EVENT FORM ── -->
     <div class="section-header">Add New Event or Open Call</div>
@@ -444,6 +505,124 @@
 </div><!-- /admin-screen -->
 
 <script>
+  /* ── AI Import ── */
+  function saveApiKey(val) {
+    localStorage.setItem('aw_claude_key', val);
+  }
+
+  function loadApiKey() {
+    const key = localStorage.getItem('aw_claude_key') || '';
+    document.getElementById('claude-api-key').value = key;
+    return key;
+  }
+
+  function setImportStatus(msg, type = '') {
+    const el = document.getElementById('import-status');
+    el.textContent = msg;
+    el.className = 'import-status ' + type;
+  }
+
+  async function importFromUrl() {
+    const url = document.getElementById('import-url').value.trim();
+    const apiKey = document.getElementById('claude-api-key').value.trim() || localStorage.getItem('aw_claude_key') || '';
+
+    if (!url) { setImportStatus('Please paste a URL first.', 'err'); return; }
+    if (!apiKey) { setImportStatus('Please enter your Claude API key below.', 'err'); return; }
+
+    const btn = document.getElementById('import-btn');
+    btn.disabled = true;
+    btn.textContent = 'Fetching…';
+    setImportStatus('Reading page…');
+
+    try {
+      // Fetch page via CORS proxy
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      const pageRes  = await fetch(proxyUrl);
+      const html     = await pageRes.text();
+
+      // Strip tags, collapse whitespace, limit length
+      const text = html
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 4000);
+
+      btn.textContent = 'Asking AI…';
+      setImportStatus('AI is reading the content…');
+
+      const today = new Date().toISOString().split('T')[0];
+      const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1024,
+          messages: [{
+            role: 'user',
+            content: `Today is ${today}. Extract art exhibition/event details from this webpage text and return ONLY a valid JSON object with these exact fields (use null if not found):
+{
+  "title": "exhibition title",
+  "type": "Exhibition|Open Call|Talk|Fair|Open Studio|Workshop|Residency|Screening|Performance|Other",
+  "venue": "gallery or venue name",
+  "area": "neighbourhood or area",
+  "address": "full street address",
+  "date": "YYYY-MM-DD start date",
+  "end_date": "YYYY-MM-DD end date or null",
+  "time": "opening/vernissage time e.g. 6:00 – 9:00 PM or null",
+  "regular_hours": "gallery visiting hours e.g. Tue–Sun: 11am–7pm or null",
+  "price": "Free or ticket price or null",
+  "description": "2-3 sentence description of the event",
+  "tags": "comma-separated tags e.g. Photography, Group Show"
+}
+
+Webpage text:
+${text}`
+          }]
+        })
+      });
+
+      const claudeData = await claudeRes.json();
+      if (claudeData.error) throw new Error(claudeData.error.message);
+
+      const jsonText = claudeData.content[0].text.trim();
+      const parsed   = JSON.parse(jsonText.replace(/^```json\n?/, '').replace(/\n?```$/, ''));
+
+      // Fill form fields
+      if (parsed.title)         document.getElementById('f-title').value         = parsed.title;
+      if (parsed.type)          document.getElementById('f-type').value           = parsed.type;
+      if (parsed.venue)         document.getElementById('f-venue').value          = parsed.venue;
+      if (parsed.area)          document.getElementById('f-area').value           = parsed.area;
+      if (parsed.address)       document.getElementById('f-address').value        = parsed.address;
+      if (parsed.date)          document.getElementById('f-date').value           = parsed.date;
+      if (parsed.end_date)      document.getElementById('f-end-date').value       = parsed.end_date;
+      if (parsed.time)          document.getElementById('f-time').value           = parsed.time;
+      if (parsed.regular_hours) document.getElementById('f-regular-hours').value  = parsed.regular_hours;
+      if (parsed.price)         document.getElementById('f-price').value          = parsed.price;
+      if (parsed.description)   document.getElementById('f-description').value    = parsed.description;
+      if (parsed.tags)          document.getElementById('f-tags').value           = parsed.tags;
+
+      // Auto-fill date label
+      autoDateLabel();
+
+      setImportStatus('✓ Form filled! Review the details and publish.', 'ok');
+      document.getElementById('import-url').value = '';
+
+    } catch (err) {
+      console.error(err);
+      setImportStatus('Error: ' + err.message, 'err');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'IMPORT WITH AI';
+  }
+
   /* ── Config ── */
   const SUPABASE_URL  = 'https://llusdyntdtyxlgsiupox.supabase.co';
   const ANON_KEY      = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsdXNkeW50ZHR5eGxnc2l1cG94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MDY4MzYsImV4cCI6MjA5OTE4MjgzNn0.aeBRl0xmxfZoWTUF3brqdBx-_QZAXsWbBhTw6H7hHKo';
@@ -485,6 +664,7 @@
     document.getElementById('admin-screen').style.display = 'block';
     buildSwatches();
     loadEvents();
+    loadApiKey();
   }
 
   if (sessionStorage.getItem('aw_ok')) showAdmin();
