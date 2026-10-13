@@ -231,6 +231,7 @@
       cursor: pointer; display: none; align-items: center; justify-content: center;
     }
     #upload-bar { height: 3px; background: var(--gold); width: 0; border-radius: 3px; margin-top: 6px; transition: width 0.3s; }
+    #change-photo-btn { display: none; margin-top: 8px; font-size: 12px; color: var(--gold); background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; }
 
     /* Form footer */
     .form-footer { margin-top: 28px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -478,6 +479,7 @@
             </div>
             <div id="upload-bar"></div>
           </div>
+          <button type="button" id="change-photo-btn" onclick="document.getElementById('f-image').click()">Change photo</button>
           <span class="hint">Optional — if no poster, an abstract art composition is generated from the colour</span>
         </div>
       </div>
@@ -745,6 +747,7 @@ ${text}`
       preview.style.display = 'block';
       document.getElementById('upload-placeholder').style.display = 'none';
       document.getElementById('remove-img').style.display = 'flex';
+      document.getElementById('change-photo-btn').style.display = 'inline-block';
     };
     reader.readAsDataURL(file);
   }
@@ -755,6 +758,7 @@ ${text}`
     document.getElementById('upload-preview').style.display = 'none';
     document.getElementById('upload-placeholder').style.display = 'block';
     document.getElementById('remove-img').style.display = 'none';
+    document.getElementById('change-photo-btn').style.display = 'none';
     document.getElementById('f-image').value = '';
     document.getElementById('upload-bar').style.width = '0';
   }
@@ -856,6 +860,7 @@ ${text}`
     document.getElementById('upload-preview').style.display = 'none';
     document.getElementById('upload-placeholder').style.display = 'block';
     document.getElementById('remove-img').style.display = 'none';
+    document.getElementById('change-photo-btn').style.display = 'none';
     document.getElementById('upload-bar').style.width = '0';
     document.getElementById('f-color').value = '#D4A017';
     document.getElementById('f-color-picker').value = '#D4A017';
