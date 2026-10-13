@@ -267,13 +267,14 @@
       padding: 3px 8px; border-radius: 3px; font-size: 9px;
       font-weight: 700; letter-spacing: 1px; flex-shrink: 0;
     }
-    .del-btn {
+    .del-btn, .edit-btn {
       width: 30px; height: 30px; background: none;
       border: 1px solid var(--border); border-radius: 4px;
       cursor: pointer; font-size: 14px; color: var(--textMid);
       transition: border-color 0.15s, color 0.15s; flex-shrink: 0;
     }
     .del-btn:hover { border-color: var(--red); color: var(--red); }
+    .edit-btn:hover { border-color: var(--gold); color: var(--gold); }
     .empty-msg { text-align: center; padding: 40px 0; font-size: 13px; color: var(--textMid); }
 
     .divider { height: 1px; background: var(--border); margin: 28px 0; }
@@ -720,6 +721,7 @@ ${text}`
 
   /* ── Image upload ── */
   let pendingFile = null;
+  let editingId = null; // tracks which event is being edited
 
   function onFileSelect(input) {
     if (input.files && input.files[0]) handleFile(input.files[0]);
@@ -802,7 +804,7 @@ ${text}`
 
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
-    btn.textContent = 'Publishing…';
+    btn.textContent = editingId ? 'Updating…' : 'Publishing…';
 
     /* Upload poster if selected */
     let imageUrl = null;
@@ -829,17 +831,33 @@ ${text}`
       tags,
       color:         document.getElementById('f-color').value,
       description,
-      image_url:     imageUrl,
     };
 
-    const { data, error } = await db.from('events').insert([payload]).select();
+    // Only update image_url if a new file was selected
+    if (imageUrl) payload.image_url = imageUrl;
 
-    if (error) {
-      showStatus('Error: ' + error.message, 'err');
+    let error;
+    if (editingId) {
+      // Update existing event
+      ({ error } = await db.from('events').update(payload).eq('id', editingId));
+      if (error) {
+        showStatus('Error: ' + error.message, 'err');
+      } else {
+        showStatus('✓ Event updated!', 'ok');
+        editingId = null;
+        clearForm();
+        loadEvents();
+      }
     } else {
-      showStatus('✓ Event published successfully!', 'ok');
-      clearForm();
-      loadEvents();
+      // Insert new event
+      ({ error } = await db.from('events').insert([payload]).select());
+      if (error) {
+        showStatus('Error: ' + error.message, 'err');
+      } else {
+        showStatus('✓ Event published successfully!', 'ok');
+        clearForm();
+        loadEvents();
+      }
     }
 
     btn.disabled = false;
@@ -857,6 +875,8 @@ ${text}`
   function clearForm() {
     document.getElementById('event-form').reset();
     pendingFile = null;
+    editingId = null;
+    document.getElementById('submit-btn').textContent = 'PUBLISH EVENT';
     document.getElementById('upload-preview').style.display = 'none';
     document.getElementById('upload-placeholder').style.display = 'block';
     document.getElementById('remove-img').style.display = 'none';
@@ -913,6 +933,7 @@ ${text}`
             <div class="event-row-sub">${e.type} · ${e.venue} · ${e.date_label || e.date}</div>
           </div>
           ${badgeHtml}
+          <button class="edit-btn" onclick="editEvent('${e.id}')" title="Edit">✎</button>
           <button class="del-btn" onclick="deleteEvent('${e.id}')" title="Delete">✕</button>
         </div>`;
     }).join('');
@@ -923,6 +944,48 @@ ${text}`
     const { error } = await db.from('events').delete().eq('id', id);
     if (error) { alert('Error: ' + error.message); return; }
     loadEvents();
+  }
+
+  async function editEvent(id) {
+    const { data, error } = await db.from('events').select('*').eq('id', id).single();
+    if (error || !data) { alert('Could not load event.'); return; }
+
+    editingId = id;
+
+    // Fill form fields
+    document.getElementById('f-title').value        = data.title || '';
+    document.getElementById('f-type').value         = data.type || '';
+    document.getElementById('f-venue').value        = data.venue || '';
+    document.getElementById('f-area').value         = data.area || '';
+    document.getElementById('f-address').value      = data.address || '';
+    document.getElementById('f-date').value         = data.date || '';
+    document.getElementById('f-end-date').value     = data.end_date || '';
+    document.getElementById('f-date-label').value   = data.date_label || '';
+    document.getElementById('f-time').value         = data.time || '';
+    document.getElementById('f-regular-hours').value= data.regular_hours || '';
+    document.getElementById('f-price').value        = data.price || 'Free';
+    document.getElementById('f-badge').value        = data.badge || '';
+    document.getElementById('f-badge-type').value   = data.badge_type || 'soon';
+    document.getElementById('f-tags').value         = (data.tags || []).join(', ');
+    document.getElementById('f-color').value        = data.color || '#D4A017';
+    document.getElementById('f-description').value  = data.description || '';
+
+    // Show existing image if any
+    if (data.image_url) {
+      const preview = document.getElementById('upload-preview');
+      preview.src = data.image_url;
+      preview.style.display = 'block';
+      document.getElementById('upload-placeholder').style.display = 'none';
+      document.getElementById('remove-img').style.display = 'flex';
+      document.getElementById('change-photo-btn').style.display = 'inline-block';
+    }
+
+    // Update button label
+    const btn = document.getElementById('submit-btn');
+    btn.textContent = 'UPDATE EVENT';
+
+    // Scroll to top of form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 </script>
 </body>
